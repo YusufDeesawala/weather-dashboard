@@ -1,132 +1,85 @@
 from flask import Flask, render_template, request
 import requests
-from dotenv import load_dotenv
-import os
 from datetime import datetime
 import json
 
-# Load environment variables from .env file
-load_dotenv()
-
 app = Flask(__name__)
 
-# Get API key from environment variable
-API_KEY = os.getenv('WEATHER_API_KEY')
+# Replace with your actual WeatherAPI key
+API_KEY = "b58259db815f4b64a7b82300253007"  # Replace with your WeatherAPI key
+BASE_URL = "http://api.weatherapi.com/v1"
 
-def get_coordinates(city):
-    """Convert city name to lat,lon coordinates using Tomorrow.io's location search API."""
-    location_url = f'https://api.tomorrow.io/v4/locations?location={city}&apikey={API_KEY}'
-    try:
-        response = requests.get(location_url, headers={'accept': 'application/json'})
-        if response.status_code == requests.codes.ok:
-            data = response.json()
-            if data.get('data') and data['data'].get('locations'):
-                location = data['data']['locations'][0]
-                return f"{location['latitude']},{location['longitude']}"
-        return None
-    except requests.RequestException:
-        return None
+# Map WeatherAPI condition codes to custom SVG icons and background styles
+WEATHER_STYLES = {
+    1000: {"icon": "/static/icons/sunny.svg", "background": "radial-gradient(circle at 50% 50%, #FFD700 0%, #FFA500 50%, #87CEEB 100%)"},  # Sunny
+    1003: {"icon": "/static/icons/partly-cloudy.svg", "background": "radial-gradient(circle at 50% 50%, #B0C4DE 0%, #87CEEB 50%, #4682B4 100%)"},  # Partly cloudy
+    1006: {"icon": "/static/icons/cloudy.svg", "background": "radial-gradient(circle at 50% 50%, #A9A9A9 0%, #778899 50%, #2F4F4F 100%)"},  # Cloudy
+    1009: {"icon": "/static/icons/overcast.svg", "background": "radial-gradient(circle at 50% 50%, #808080 0%, #696969 50%, #2F4F4F 100%)"},  # Overcast
+    1063: {"icon": "/static/icons/rain.svg", "background": "radial-gradient(circle at 50% 50%, #4682B4 0%, #1E90FF 50%, #000080 100%)"},  # Patchy rain
+    1183: {"icon": "/static/icons/rain.svg", "background": "radial-gradient(circle at 50% 50%, #4682B4 0%, #1E90FF 50%, #000080 100%)"},  # Moderate rain
+    1213: {"icon": "/static/icons/snow.svg", "background": "radial-gradient(circle at 50% 50%, #F0F8FF 0%, #E6E6FA 50%, #B0C4DE 100%)"},  # Snow
+    # Add more mappings as needed
+}
 
-@app.route('/', methods=['GET', 'POST'])
-def weather_dashboard():
+@app.route("/", methods=["GET", "POST"])
+def index():
     weather_data = None
-    hourly_forecast = None
-    daily_forecast = None
-    alerts = None
+    forecast_data = None
+    location = "London"
+    forecast_days = 5
     error = None
-    location = '42.3478,-71.0466'  # Default location (Boston)
-    city = 'Boston'  # Default city for display
+    unit = "C"  # Default to Celsius
 
-    if request.method == 'POST':
-        city_input = request.form.get('city', '').strip()
-        if city_input:
-            # Check if input is already in lat,lon format
-            if ',' in city_input and all(part.replace('.', '').replace('-', '').isdigit() for part in city_input.split(',')):
-                location = city_input
-                city = city_input  # Display as is for coordinates
-            else:
-                # Convert city name to coordinates
-                coords = get_coordinates(city_input)
-                if coords:
-                    location = coords
-                    city = city_input
-                else:
-                    error = f"Could not find coordinates for city: {city_input}"
-        else:
-            error = "Please enter a city name or lat,lon coordinates"
+    if request.method == "POST":
+        location = request.form.get("location", "London").strip()
+        forecast_days = int(request.form.get("forecast_days", 5))
+        unit = request.form.get("unit", "C")
+        if forecast_days not in [5, 10, 30]:
+            forecast_days = 5
 
-    # Fetch real-time weather data
-    if not error:
-        realtime_url = f'https://api.tomorrow.io/v4/weather/realtime?location={location}&apikey={API_KEY}'
+        # Handle coordinates from geolocation
+        if "," in location:
+            try:
+                lat, lon = map(float, location.split(","))
+                location = f"{lat},{lon}"
+            except ValueError:
+                error = "Invalid coordinates format"
+                location = "London"
+
+        # Fetch current weather
+        current_url = f"{BASE_URL}/current.json?key={API_KEY}&q={location}&aqi=yes"
         try:
-            response = requests.get(realtime_url, headers={'accept': 'application/json'})
-            if response.status_code == requests.codes.ok:
-                weather_data = response.json()['data']['values']
-                weather_data['time'] = response.json()['data']['time']
-            else:
-                error = f"Error fetching real-time data: {response.status_code} - {response.text}"
-        except requests.RequestException as e:
-            error = f"Error connecting to weather API: {str(e)}"
+            response = requests.get(current_url)
+            response.raise_for_status()
+            weather_data = response.json()
+        except requests.exceptions.RequestException as e:
+            error = f"Error fetching current weather: {str(e)}"
+            weather_data = None
 
-    # Fetch forecast data (hourly and daily)
-    if not error:
-        forecast_url = f'https://api.tomorrow.io/v4/weather/forecast?location={location}&timesteps=1h,1d&apikey={API_KEY}'
+        # Fetch forecast
+        forecast_url = f"{BASE_URL}/forecast.json?key={API_KEY}&q={location}&days={forecast_days}&aqi=no&alerts=yes"
         try:
-            response = requests.get(forecast_url, headers={'accept': 'application/json'})
-            if response.status_code == requests.codes.ok:
-                data = response.json()['timelines']
-                # Process hourly forecast to show only hours
-                hourly_forecast = [
-                    {
-                        'time': datetime.strptime(h['time'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d %H:00'),
-                        'values': h['values']
-                    } for h in data['hourly'][:12]  # Limit to 12 hours
-                ]
-                daily_forecast = data['daily'][:5]  # Next 5 days
-            else:
-                error = f"Error fetching forecast data: {response.status_code} - {response.text}"
-        except requests.RequestException as e:
-            error = f"Error connecting to forecast API: {str(e)}"
+            response = requests.get(forecast_url)
+            response.raise_for_status()
+            forecast_data = response.json()
+        except requests.exceptions.RequestException as e:
+            error = f"Error fetching forecast: {str(e)}" if not error else error
+            forecast_data = None
 
-    # Fetch weather alerts (if available)
-    if not error:
-        alerts_url = f'https://api.tomorrow.io/v4/events?location={location}&apikey={API_KEY}'
-        try:
-            response = requests.get(alerts_url, headers={'accept': 'application/json'})
-            if response.status_code == requests.codes.ok:
-                alerts = response.json().get('data', {}).get('events', [])
-            else:
-                error = f"Error fetching alerts: {response.status_code} - {response.text}"
-        except requests.RequestException as e:
-            error = f"Error connecting to alerts API: {str(e)}"
-
-    # Prepare data for charts
-    chart_data = {
-        'hourly': {
-            'labels': [h['time'] for h in hourly_forecast] if hourly_forecast else [],
-            'temperature': [h['values']['temperature'] for h in hourly_forecast] if hourly_forecast else [],
-            'humidity': [h['values']['humidity'] for h in hourly_forecast] if hourly_forecast else [],
-            'precipitation': [h['values']['precipitationProbability'] for h in hourly_forecast] if hourly_forecast else [],
-            'cloudCover': [h['values']['cloudCover'] for h in hourly_forecast] if hourly_forecast else [],
-            'pressure': [h['values']['pressureSurfaceLevel'] for h in hourly_forecast] if hourly_forecast else []
-        },
-        'daily': {
-            'labels': [d['time'] for d in daily_forecast] if daily_forecast else [],
-            'temperatureMax': [d['values']['temperatureMax'] for d in daily_forecast] if daily_forecast else [],
-            'temperatureMin': [d['values']['temperatureMin'] for d in daily_forecast] if daily_forecast else []
-        }
-    }
+    # Prepare style for current weather
+    current_style = WEATHER_STYLES.get(weather_data["current"]["condition"]["code"], WEATHER_STYLES[1000]) if weather_data else WEATHER_STYLES[1000]
 
     return render_template(
-        'index.html',
+        "index.html",
         weather_data=weather_data,
-        hourly_forecast=hourly_forecast,
-        daily_forecast=daily_forecast,
-        alerts=alerts,
+        forecast_data=forecast_data,
+        location=location,
+        forecast_days=forecast_days,
         error=error,
-        city=city,
-        chart_data=json.dumps(chart_data)
+        unit=unit,
+        weather_styles=WEATHER_STYLES,
+        current_style=current_style
     )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

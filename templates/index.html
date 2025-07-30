@@ -6,323 +6,986 @@
     <title>Weather Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --liquid-glass-primary: rgba(20, 20, 20, 0.9);
+            --liquid-glass-secondary: rgba(30, 30, 30, 0.85);
+            --liquid-glass-tertiary: rgba(40, 40, 40, 0.8);
+            --liquid-border: rgba(255, 255, 255, 0.15);
+            --liquid-border-hover: rgba(255, 255, 255, 0.25);
+            --liquid-shadow: rgba(0, 0, 0, 0.6);
+            --liquid-glow: rgba(255, 255, 255, 0.1);
+            --accent-blue: #007AFF;
+            --accent-purple: #5856D6;
+            --accent-pink: #FF2D92;
+            --accent-orange: #FF9500;
+            --accent-green: #30D158;
+            --accent-cyan: #64D2FF;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000000;
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            overflow-x: hidden;
+            transition: background-image 0.5s ease;
+        }
+
+        /* Liquid Glass Cards */
+        .liquid-card {
+            background: var(--liquid-glass-primary);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--liquid-border);
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 60px var(--liquid-shadow),
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .liquid-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.6) 20%, 
+                rgba(255, 255, 255, 0.8) 50%, 
+                rgba(255, 255, 255, 0.6) 80%, 
+                transparent 100%);
+            opacity: 0.8;
+        }
+
+        .liquid-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--liquid-border-hover);
+            box-shadow: 
+                0 32px 80px var(--liquid-shadow),
+                0 16px 48px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Liquid Input */
+        .liquid-input {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            color: white;
+            padding: 16px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 
+                inset 0 2px 8px rgba(0, 0, 0, 0.3),
+                0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .liquid-input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--accent-blue);
+            box-shadow: 
+                0 0 0 4px rgba(0, 122, 255, 0.2),
+                inset 0 2px 8px rgba(0, 0, 0, 0.2),
+                0 8px 32px rgba(0, 122, 255, 0.15);
+            outline: none;
+            transform: scale(1.02);
+        }
+
+        .liquid-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+
+        /* Liquid Buttons */
+        .liquid-btn {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #0056CC 100%);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 16px 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 24px rgba(0, 122, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+
+        .liquid-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .liquid-btn:hover::before {
+            left: 100%;
+        }
+
+        .liquid-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 16px 40px rgba(0, 122, 255, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .liquid-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .liquid-btn-secondary {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #28A745 100%);
+            box-shadow: 
+                0 8px 24px rgba(48, 209, 88, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .liquid-btn-secondary:hover {
+            box-shadow: 
+                0 16px 40px rgba(48, 209, 88, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        /* Weather Icons */
+        .weather-icon-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .weather-icon {
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .weather-icon:hover {
+            transform: scale(1.15) rotate(5deg);
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.5));
+        }
+
+        .weather-icon-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .weather-icon-container:hover::before {
+            opacity: 1;
+        }
+
+        /* Forecast Cards */
+        .forecast-card {
+            background: var(--liquid-glass-secondary);
+            backdrop-filter: blur(30px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .forecast-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--accent-blue) 25%, 
+                var(--accent-purple) 50%, 
+                var(--accent-pink) 75%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .forecast-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            background: var(--liquid-glass-tertiary);
+            backdrop-filter: blur(25px) saturate(140%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 
+                0 16px 48px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .chart-container:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 24px 64px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.12) 0%, 
+                rgba(255, 255, 255, 0.06) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        }
+
+        .metric-card:hover {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.18) 0%, 
+                rgba(255, 255, 255, 0.08) 100%);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Typography */
+        .text-glow {
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, 
+                var(--accent-blue) 0%, 
+                var(--accent-purple) 35%, 
+                var(--accent-pink) 70%, 
+                var(--accent-orange) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        /* Animations */
+        @keyframes liquidFlow {
+            0%, 100% { 
+                transform: translateX(0) scale(1); 
+                opacity: 0.6;
+            }
+            50% { 
+                transform: translateX(10px) scale(1.1); 
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(0, 122, 255, 0.6);
+            }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 4px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #0056CC, #4A44B8);
+        }
+
+        /* Responsive Enhancements */
+        @media (max-width: 768px) {
+            .liquid-card {
+                border-radius: 20px;
+                margin: 0 4px;
+            }
+            
+            .forecast-card {
+                border-radius: 16px;
+            }
+        }
+
+        .dark-mode-text { color: rgba(255, 255, 255, 0.9); }
+        .dark-mode-subtext { color: rgba(255, 255, 255, 0.6); }
+        .dark-mode-accent { color: rgba(255, 255, 255, 0.4); }
+
+        .hidden { display: none; }
+        .error-message {
+            background: rgba(255, 45, 85, 0.1);
+            border: 1px solid rgba(255, 45, 85, 0.3);
+            color: #ff2d55;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
-    <div class="container mx-auto max-w-4xl">
-        <h1 class="text-3xl font-bold text-center mb-6">Weather Dashboard</h1>
+<body>
+    <div class="container mx-auto p-4 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-bold text-glow mb-4 gradient-text">Weather Dashboard</h1>
+            <p class="dark-mode-subtext text-xl font-medium">Beautiful weather insights with liquid glass design</p>
+        </div>
         
-        <!-- City input form -->
-        <form method="POST" class="mb-6">
-            <div class="flex gap-2 justify-center">
-                <input 
-                    type="text" 
-                    name="city" 
-                    value="{{ city }}" 
-                    placeholder="Enter city name or lat,lon" 
-                    class="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-                >
-                <button 
-                    type="submit" 
-                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                >
-                    Get Weather
-                </button>
-            </div>
-        </form>
-
-        <!-- Error message -->
-        {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-                {{ error }}
-            </div>
-        {% endif %}
-
-        <!-- Current Weather -->
-        {% if weather_data %}
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">{{ city | capitalize }} - Current Weather</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                        <p class="text-gray-600">Temperature</p>
-                        <p class="text-lg font-bold">{{ weather_data.temperature }}°C</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Feels Like</p>
-                        <p class="text-lg font-bold">{{ weather_data.temperatureApparent }}°C</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Humidity</p>
-                        <p class="text-lg font-bold">{{ weather_data.humidity }}%</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Wind Speed</p>
-                        <p class="text-lg font-bold">{{ weather_data.windSpeed }} m/s</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Wind Direction</p>
-                        <p class="text-lg font-bold">{{ weather_data.windDirection }}°</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Precipitation Probability</p>
-                        <p class="text-lg font-bold">{{ weather_data.precipitationProbability }}%</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Precipitation Type</p>
-                        <p class="text-lg font-bold">{{ weather_data.precipitationType | default('None') }}</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Cloud Cover</p>
-                        <p class="text-lg font-bold">{{ weather_data.cloudCover }}%</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Pressure (hPa)</p>
-                        <p class="text-lg font-bold">{{ weather_data.pressureSurfaceLevel }}</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-600">Air Quality (UV Index)</p>
-                        <p class="text-lg font-bold">{{ weather_data.uvIndex }}</p>
-                    </div>
+        <!-- Search Form -->
+        <div class="liquid-card p-8 mb-12">
+            <form id="weatherForm">
+                <div class="flex flex-col lg:flex-row justify-center items-center gap-6">
+                    <input type="text" name="location" id="locationInput" value="London" 
+                           placeholder="Enter city or coordinates" 
+                           class="liquid-input w-full lg:w-96 text-white">
+                    <select name="forecast_days" id="forecastDays" class="liquid-input w-full lg:w-48">
+                        <option value="5">5 Days</option>
+                        <option value="10">10 Days</option>
+                        <option value="30">1 Month</option>
+                    </select>
+                    <select name="unit" id="unitSelect" class="liquid-input w-full lg:w-32">
+                        <option value="C">°C</option>
+                        <option value="F">°F</option>
+                    </select>
+                    <button type="submit" class="liquid-btn w-full lg:w-auto">🔍 Search Weather</button>
+                    <button type="button" id="geolocationBtn" class="liquid-btn liquid-btn-secondary w-full lg:w-auto">📍 My Location</button>
                 </div>
-                <p class="text-gray-500 text-sm mt-4">Last updated: {{ weather_data.time }}</p>
-            </div>
-        {% endif %}
+            </form>
+        </div>
 
-        <!-- Weather Alerts -->
-        {% if alerts %}
-            <div class="bg-yellow-100 p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Weather Alerts</h2>
-                {% for alert in alerts %}
-                    <div class="mb-2">
-                        <p class="text-lg font-bold">{{ alert.eventName }}</p>
-                        <p class="text-gray-600">{{ alert.description }}</p>
-                        <p class="text-gray-500 text-sm">Start: {{ alert.startTime }} | End: {{ alert.endTime }}</p>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden text-center"></div>
 
-        <!-- Hourly Forecast -->
-        {% if hourly_forecast %}
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Hourly Forecast</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="bg-gray-200">
-                                <th class="p-2">Time</th>
-                                <th class="p-2">Temp (°C)</th>
-                                <th class="p-2">Humidity (%)</th>
-                                <th class="p-2">Precip. (%)</th>
-                                <th class="p-2">Precip. Type</th>
-                                <th class="p-2">Wind (m/s)</th>
-                                <th class="p-2">Wind Dir (°)</th>
-                                <th class="p-2">Cloud Cover (%)</th>
-                                <th class="p-2">Pressure (hPa)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for hour in hourly_forecast %}
-                                <tr class="border-b">
-                                    <td class="p-2">{{ hour.time }}</td>
-                                    <td class="p-2">{{ hour.values.temperature }}</td>
-                                    <td class="p-2">{{ hour.values.humidity }}</td>
-                                    <td class="p-2">{{ hour.values.precipitationProbability }}</td>
-                                    <td class="p-2">{{ hour.values.precipitationType | default('None') }}</td>
-                                    <td class="p-2">{{ hour.values.windSpeed }}</td>
-                                    <td class="p-2">{{ hour.values.windDirection }}</td>
-                                    <td class="p-2">{{ hour.values.cloudCover }}</td>
-                                    <td class="p-2">{{ hour.values.pressureSurfaceLevel }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden text-center mb-8">
+            <div class="liquid-card p-8">
+                <div class="loading-shimmer h-8 w-64 mx-auto rounded mb-4"></div>
+                <p class="dark-mode-subtext">Loading weather data...</p>
             </div>
-        {% endif %}
+        </div>
 
-        <!-- Daily Forecast -->
-        {% if daily_forecast %}
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Daily Forecast (Next 5 Days)</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="bg-gray-200">
-                                <th class="p-2">Date</th>
-                                <th class="p-2">Max Temp (°C)</th>
-                                <th class="p-2">Min Temp (°C)</th>
-                                <th class="p-2">Precip. (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for day in daily_forecast %}
-                                <tr class="border-b">
-                                    <td class="p-2">{{ day.time }}</td>
-                                    <td class="p-2">{{ day.values.temperatureMax }}</td>
-                                    <td class="p-2">{{ day.values.temperatureMin }}</td>
-                                    <td class="p-2">{{ day.values.precipitationProbability }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
-
-        <!-- Charts -->
-        {% if chart_data %}
-            <div class="bg-white p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4">Weather Trends</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold mb-2">Hourly Temperature & Humidity</h3>
-                        <canvas id="tempHumidityChart"></canvas>
+        <!-- Weather Data Container -->
+        <div id="weatherContainer" class="hidden">
+            <!-- Current Weather -->
+            <div class="liquid-card p-10 mb-12">
+                <h2 class="text-4xl font-bold mb-8 text-center gradient-text" id="locationTitle">
+                    Current Weather
+                </h2>
+                <div class="flex flex-col xl:flex-row items-center justify-between gap-8">
+                    <!-- Main Weather Info -->
+                    <div class="flex items-center">
+                        <div class="weather-icon-container mr-8">
+                            <div id="weatherIcon" class="weather-icon w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center text-6xl">
+                                ☀️
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-6xl font-bold mb-3 text-glow" id="currentTemp">
+                                22°C
+                            </p>
+                            <p class="text-2xl dark-mode-text mb-2" id="currentCondition">Sunny</p>
+                            <p class="text-xl dark-mode-subtext" id="feelsLike">
+                                Feels like 25°C
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-2">Hourly Precipitation & Cloud Cover</h3>
-                        <canvas id="precipCloudChart"></canvas>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-2">Hourly Pressure</h3>
-                        <canvas id="pressureChart"></canvas>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-2">Daily Temperature Range</h3>
-                        <canvas id="dailyChart"></canvas>
+                    <!-- Weather Metrics Grid -->
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">💧</div>
+                            <div class="text-sm dark-mode-accent mb-1">Humidity</div>
+                            <div class="text-xl font-bold dark-mode-text" id="humidity">65%</div>
+                        </div>
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">💨</div>
+                            <div class="text-sm dark-mode-accent mb-1">Wind</div>
+                            <div class="text-xl font-bold dark-mode-text" id="wind">12 kph NE</div>
+                        </div>
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">🌡️</div>
+                            <div class="text-sm dark-mode-accent mb-1">Pressure</div>
+                            <div class="text-xl font-bold dark-mode-text" id="pressure">1013 mb</div>
+                        </div>
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">👁️</div>
+                            <div class="text-sm dark-mode-accent mb-1">Visibility</div>
+                            <div class="text-xl font-bold dark-mode-text" id="visibility">10 km</div>
+                        </div>
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">☀️</div>
+                            <div class="text-sm dark-mode-accent mb-1">UV Index</div>
+                            <div class="text-xl font-bold dark-mode-text" id="uvIndex">5</div>
+                        </div>
+                        <div class="metric-card p-6 text-center">
+                            <div class="text-3xl mb-2">🌅</div>
+                            <div class="text-sm dark-mode-accent mb-1">Sunrise</div>
+                            <div class="text-xl font-bold dark-mode-text" id="sunrise">06:30</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <script>
-                const chartData = {{ chart_data | safe }};
 
-                // Hourly Temperature & Humidity Chart
-                new Chart(document.getElementById('tempHumidityChart'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
-                        datasets: [
-                            {
-                                label: 'Temperature (°C)',
-                                data: chartData.hourly.temperature,
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                fill: false,
-                                yAxisID: 'y'
-                            },
-                            {
-                                label: 'Humidity (%)',
-                                data: chartData.hourly.humidity,
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                fill: false,
-                                yAxisID: 'y1'
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                title: { display: true, text: 'Temperature (°C)' },
-                                position: 'left'
-                            },
-                            y1: {
-                                title: { display: true, text: 'Humidity (%)' },
-                                position: 'right',
-                                grid: { drawOnChartArea: false }
-                            }
-                        }
-                    }
-                });
+            <!-- Forecast -->
+            <div class="liquid-card p-10 mb-12">
+                <h2 class="text-4xl font-bold mb-8 text-center gradient-text">5-Day Forecast</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6" id="forecastContainer">
+                    <!-- Forecast cards will be populated by JavaScript -->
+                </div>
+            </div>
 
-                // Hourly Precipitation & Cloud Cover Chart
-                new Chart(document.getElementById('precipCloudChart'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
-                        datasets: [
-                            {
-                                label: 'Precipitation Probability (%)',
-                                data: chartData.hourly.precipitation,
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                fill: false,
-                                yAxisID: 'y'
-                            },
-                            {
-                                label: 'Cloud Cover (%)',
-                                data: chartData.hourly.cloudCover,
-                                borderColor: 'rgba(153, 102, 255, 1)',
-                                fill: false,
-                                yAxisID: 'y1'
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                title: { display: true, text: 'Precipitation (%)' },
-                                position: 'left'
-                            },
-                            y1: {
-                                title: { display: true, text: 'Cloud Cover (%)' },
-                                position: 'right',
-                                grid: { drawOnChartArea: false }
-                            }
-                        }
-                    }
-                });
+            <!-- Charts Section -->
+            <div class="liquid-card p-10">
+                <h2 class="text-4xl font-bold mb-10 text-center gradient-text">Weather Analytics</h2>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Temperature Chart -->
+                    <div class="chart-container">
+                        <h3 class="text-2xl font-bold mb-6 text-orange-400 flex items-center">
+                            <span class="text-3xl mr-3">🌡️</span> Temperature Trends
+                        </h3>
+                        <div class="relative" style="height: 350px;">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Precipitation Chart -->
+                    <div class="chart-container">
+                        <h3 class="text-2xl font-bold mb-6 text-blue-400 flex items-center">
+                            <span class="text-3xl mr-3">🌧️</span> Precipitation
+                        </h3>
+                        <div class="relative" style="height: 350px;">
+                            <canvas id="precipChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Humidity Chart -->
+                    <div class="chart-container">
+                        <h3 class="text-2xl font-bold mb-6 text-purple-400 flex items-center">
+                            <span class="text-3xl mr-3">💧</span> Humidity Levels
+                        </h3>
+                        <div class="relative" style="height: 350px;">
+                            <canvas id="humidityChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Wind Speed Chart -->
+                    <div class="chart-container">
+                        <h3 class="text-2xl font-bold mb-6 text-green-400 flex items-center">
+                            <span class="text-3xl mr-3">💨</span> Wind Speed
+                        </h3>
+                        <div class="relative" style="height: 350px;">
+                            <canvas id="windChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                // Hourly Pressure Chart
-                new Chart(document.getElementById('pressureChart'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
-                        datasets: [
-                            {
-                                label: 'Pressure (hPa)',
-                                data: chartData.hourly.pressure,
-                                borderColor: 'rgba(255, 159, 64, 1)',
-                                fill: false
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                title: { display: true, text: 'Pressure (hPa)' }
-                            }
-                        }
-                    }
-                });
-
-                // Daily Temperature Chart
-                new Chart(document.getElementById('dailyChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: chartData.daily.labels.map(t => new Date(t).toLocaleDateString()),
-                        datasets: [
-                            {
-                                label: 'Max Temperature (°C)',
-                                data: chartData.daily.temperatureMax,
-                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                                stack: 'Stack 0'
-                            },
-                            {
-                                label: 'Min Temperature (°C)',
-                                data: chartData.daily.temperatureMin,
-                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                                stack: 'Stack 0'
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                title: { display: true, text: 'Temperature (°C)' },
-                                stacked: true
-                            }
-                        }
-                    }
-                });
-            </script>
-        {% endif %}
+        <!-- Footer -->
+        <div class="text-center mt-12 mb-8">
+            <p class="dark-mode-accent text-sm">Powered by WeatherAPI • Designed with Apple's Liquid Glass UI</p>
+        </div>
     </div>
+
+    <script>
+        // Sample weather data for demonstration
+        const sampleWeatherData = {
+            location: { name: "London" },
+            current: {
+                temp_c: 22, temp_f: 72,
+                condition: { text: "Partly Cloudy" },
+                feelslike_c: 25, feelslike_f: 77,
+                humidity: 65,
+                wind_kph: 12, wind_dir: "NE",
+                pressure_mb: 1013,
+                vis_km: 10,
+                uv: 5
+            },
+            forecast: [
+                { day: "Today", temp_max: 25, temp_min: 18, condition: "Sunny", rain: 0, wind: 12, icon: "☀️" },
+                { day: "Tomorrow", temp_max: 23, temp_min: 16, condition: "Cloudy", rain: 2, wind: 15, icon: "☁️" },
+                { day: "Day 3", temp_max: 20, temp_min: 14, condition: "Rainy", rain: 8, wind: 18, icon: "🌧️" },
+                { day: "Day 4", temp_max: 24, temp_min: 17, condition: "Partly Cloudy", rain: 1, wind: 10, icon: "⛅" },
+                { day: "Day 5", temp_max: 26, temp_min: 19, condition: "Sunny", rain: 0, wind: 8, icon: "☀️" }
+            ]
+        };
+
+        let currentUnit = 'C';
+        let weatherCharts = {};
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleData();
+            initializeEventListeners();
+        });
+
+        function initializeEventListeners() {
+            // Form submission
+            document.getElementById('weatherForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                searchWeather();
+            });
+
+            // Geolocation button
+            document.getElementById('geolocationBtn').addEventListener('click', function() {
+                getLocation();
+            });
+
+            // Unit change
+            document.getElementById('unitSelect').addEventListener('change', function() {
+                currentUnit = this.value;
+                updateTemperatureDisplay();
+            });
+        }
+
+        function loadSampleData() {
+            showWeatherData(sampleWeatherData);
+        }
+
+        function searchWeather() {
+            const location = document.getElementById('locationInput').value;
+            const forecastDays = document.getElementById('forecastDays').value;
+            
+            showLoading();
+            
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                showWeatherData(sampleWeatherData);
+            }, 1000);
+        }
+
+        function getLocation() {
+            const btn = document.getElementById('geolocationBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '📍 Getting Location...';
+            btn.disabled = true;
+            btn.classList.add('pulse-glow');
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude.toFixed(4);
+                        const lon = position.coords.longitude.toFixed(4);
+                        document.getElementById('locationInput').value = `${lat},${lon}`;
+                        btn.innerHTML = '✅ Location Found!';
+                        btn.classList.remove('pulse-glow');
+                        btn.style.boxShadow = '0 0 30px rgba(48, 209, 88, 0.6)';
+                        setTimeout(() => {
+                            searchWeather();
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            btn.style.boxShadow = '';
+                        }, 1000);
+                    },
+                    (error) => {
+                        btn.innerHTML = '❌ Location Error';
+                        btn.classList.remove('pulse-glow');
+                        btn.style.boxShadow = '0 0 30px rgba(255, 45, 146, 0.6)';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            btn.style.boxShadow = '';
+                        }, 2000);
+                    }
+                );
+            } else {
+                btn.innerHTML = '❌ Not Supported';
+                btn.classList.remove('pulse-glow');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('weatherContainer').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('weatherContainer').classList.add('hidden');
+            hideLoading();
+        }
+
+        function showWeatherData(data) {
+            hideLoading();
+            document.getElementById('weatherContainer').classList.remove('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+
+            // Update current weather
+            updateCurrentWeather(data);
+            updateForecast(data.forecast);
+            createCharts(data.forecast);
+        }
+
+        function updateCurrentWeather(data) {
+            const temp = currentUnit === 'C' ? data.current.temp_c : data.current.temp_f;
+            const feelsLike = currentUnit === 'C' ? data.current.feelslike_c : data.current.feelslike_f;
+            const unit = currentUnit === 'C' ? '°C' : '°F';
+
+            document.getElementById('locationTitle').textContent = `Current Weather in ${data.location.name}`;
+            document.getElementById('currentTemp').textContent = `${temp}${unit}`;
+            document.getElementById('currentCondition').textContent = data.current.condition.text;
+            document.getElementById('feelsLike').textContent = `Feels like ${feelsLike}${unit}`;
+            document.getElementById('humidity').textContent = `${data.current.humidity}%`;
+            document.getElementById('wind').textContent = `${data.current.wind_kph} kph ${data.current.wind_dir}`;
+            document.getElementById('pressure').textContent = `${data.current.pressure_mb} mb`;
+            document.getElementById('visibility').textContent = `${data.current.vis_km} km`;
+            document.getElementById('uvIndex').textContent = data.current.uv;
+            document.getElementById('sunrise').textContent = '06:30';
+        }
+
+        function updateForecast(forecastData) {
+            const container = document.getElementById('forecastContainer');
+            container.innerHTML = '';
+
+            forecastData.forEach((day, index) => {
+                const maxTemp = currentUnit === 'C' ? day.temp_max : Math.round(day.temp_max * 9/5 + 32);
+                const minTemp = currentUnit === 'C' ? day.temp_min : Math.round(day.temp_min * 9/5 + 32);
+                const unit = currentUnit === 'C' ? '°C' : '°F';
+
+                const card = document.createElement('div');
+                card.className = 'forecast-card p-6 text-center';
+                card.innerHTML = `
+                    <h3 class="font-bold text-lg mb-4 text-blue-400">${day.day}</h3>
+                    <div class="weather-icon-container mb-4">
+                        <div class="weather-icon w-20 h-20 mx-auto text-5xl flex items-center justify-center">
+                            ${day.icon}
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="dark-mode-accent">Max:</span>
+                            <span class="font-bold text-orange-400">${maxTemp}${unit}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="dark-mode-accent">Min:</span>
+                            <span class="font-bold text-blue-400">${minTemp}${unit}</span>
+                        </div>
+                        <div class="text-sm dark-mode-text mt-4">${day.condition}</div>
+                        <div class="grid grid-cols-2 gap-3 mt-5 text-xs">
+                            <div>
+                                <div class="dark-mode-accent">Rain</div>
+                                <div class="text-blue-400 font-semibold">${day.rain} mm</div>
+                            </div>
+                            <div>
+                                <div class="dark-mode-accent">Wind</div>
+                                <div class="text-green-400 font-semibold">${day.wind} kph</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateTemperatureDisplay() {
+            // Update all temperature displays when unit changes
+            if (document.getElementById('weatherContainer').classList.contains('hidden')) return;
+            
+            // This would update the display with the current data
+            loadSampleData();
+        }
+
+        function createCharts(forecastData) {
+            // Chart.js Configuration
+            Chart.defaults.color = '#ffffff';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+            
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff',
+                            font: { size: 14, weight: '600' },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 20, 20, 0.95)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 12,
+                        displayColors: true,
+                        titleFont: { size: 14, weight: '600' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: 'rgba(255, 255, 255, 0.8)', font: { size: 12, weight: '500' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false }
+                    },
+                    y: {
+                        ticks: { color: 'rgba(255, 255, 255, 0.8)', font: { size: 12, weight: '500' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false }
+                    }
+                },
+                elements: {
+                    point: { radius: 6, hoverRadius: 8, borderWidth: 3 },
+                    line: { borderWidth: 3, tension: 0.4 }
+                }
+            };
+
+            const labels = forecastData.map(day => day.day);
+
+            // Destroy existing charts
+            Object.values(weatherCharts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            // Temperature Chart
+            const tempCtx = document.getElementById('tempChart').getContext('2d');
+            const tempGradient = tempCtx.createLinearGradient(0, 0, 0, 350);
+            tempGradient.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
+            tempGradient.addColorStop(1, 'rgba(255, 107, 107, 0.05)');
+            const tempGradientMin = tempCtx.createLinearGradient(0, 0, 0, 350);
+            tempGradientMin.addColorStop(0, 'rgba(78, 205, 196, 0.3)');
+            tempGradientMin.addColorStop(1, 'rgba(78, 205, 196, 0.05)');
+
+            weatherCharts.temp = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Max Temperature (${currentUnit === 'C' ? '°C' : '°F'})`,
+                        data: forecastData.map(day => currentUnit === 'C' ? day.temp_max : Math.round(day.temp_max * 9/5 + 32)),
+                        borderColor: '#ff6b6b',
+                        backgroundColor: tempGradient,
+                        fill: true,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointBorderColor: '#ffffff'
+                    }, {
+                        label: `Min Temperature (${currentUnit === 'C' ? '°C' : '°F'})`,
+                        data: forecastData.map(day => currentUnit === 'C' ? day.temp_min : Math.round(day.temp_min * 9/5 + 32)),
+                        borderColor: '#4ecdc4',
+                        backgroundColor: tempGradientMin,
+                        fill: true,
+                        pointBackgroundColor: '#4ecdc4',
+                        pointBorderColor: '#ffffff'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Precipitation Chart
+            const precipCtx = document.getElementById('precipChart').getContext('2d');
+            const precipGradient = precipCtx.createLinearGradient(0, 0, 0, 350);
+            precipGradient.addColorStop(0, 'rgba(74, 144, 226, 0.8)');
+            precipGradient.addColorStop(1, 'rgba(74, 144, 226, 0.2)');
+
+            weatherCharts.precip = new Chart(precipCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Precipitation (mm)',
+                        data: forecastData.map(day => day.rain),
+                        backgroundColor: precipGradient,
+                        borderColor: '#4a90e2',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    elements: { bar: { borderRadius: 8 } }
+                }
+            });
+
+            // Humidity Chart
+            const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+            const humidityGradient = humidityCtx.createLinearGradient(0, 0, 0, 350);
+            humidityGradient.addColorStop(0, 'rgba(155, 89, 182, 0.3)');
+            humidityGradient.addColorStop(1, 'rgba(155, 89, 182, 0.05)');
+
+            weatherCharts.humidity = new Chart(humidityCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Humidity (%)',
+                        data: [65, 70, 80, 60, 55], // Sample data
+                        borderColor: '#9b59b6',
+                        backgroundColor: humidityGradient,
+                        fill: true,
+                        pointBackgroundColor: '#9b59b6',
+                        pointBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: { ...chartOptions.scales.y, beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // Wind Speed Chart
+            const windCtx = document.getElementById('windChart').getContext('2d');
+            const windGradient = windCtx.createLinearGradient(0, 0, 0, 350);
+            windGradient.addColorStop(0, 'rgba(46, 204, 113, 0.3)');
+            windGradient.addColorStop(1, 'rgba(46, 204, 113, 0.05)');
+
+            weatherCharts.wind = new Chart(windCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Wind Speed (kph)',
+                        data: forecastData.map(day => day.wind),
+                        borderColor: '#2ecc71',
+                        backgroundColor: windGradient,
+                        fill: true,
+                        pointBackgroundColor: '#2ecc71',
+                        pointBorderColor: '#ffffff'
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // Interactive Effects
+        document.querySelectorAll('.liquid-card, .forecast-card, .metric-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transition = 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            });
+        });
+
+        document.querySelectorAll('.liquid-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                if (this.parentElement) {
+                    this.parentElement.style.transform = 'scale(1.02)';
+                }
+            });
+            input.addEventListener('blur', function() {
+                if (this.parentElement) {
+                    this.parentElement.style.transform = 'scale(1)';
+                }
+            });
+        });
+
+        // Smooth scroll
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        // Initialize page
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+        });
+    </script>
 </body>
 </html>
