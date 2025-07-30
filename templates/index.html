@@ -41,7 +41,7 @@
         {% if weather_data %}
             <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
                 <h2 class="text-2xl font-semibold mb-4">{{ city | capitalize }} - Current Weather</h2>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                         <p class="text-gray-600">Temperature</p>
                         <p class="text-lg font-bold">{{ weather_data.temperature }}°C</p>
@@ -59,8 +59,24 @@
                         <p class="text-lg font-bold">{{ weather_data.windSpeed }} m/s</p>
                     </div>
                     <div>
+                        <p class="text-gray-600">Wind Direction</p>
+                        <p class="text-lg font-bold">{{ weather_data.windDirection }}°</p>
+                    </div>
+                    <div>
                         <p class="text-gray-600">Precipitation Probability</p>
                         <p class="text-lg font-bold">{{ weather_data.precipitationProbability }}%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Precipitation Type</p>
+                        <p class="text-lg font-bold">{{ weather_data.precipitationType | default('None') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Cloud Cover</p>
+                        <p class="text-lg font-bold">{{ weather_data.cloudCover }}%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Pressure (hPa)</p>
+                        <p class="text-lg font-bold">{{ weather_data.pressureSurfaceLevel }}</p>
                     </div>
                     <div>
                         <p class="text-gray-600">Air Quality (UV Index)</p>
@@ -88,7 +104,7 @@
         <!-- Hourly Forecast -->
         {% if hourly_forecast %}
             <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-2xl font-semibold mb-4">Hourly Forecast (Next 24 Hours)</h2>
+                <h2 class="text-2xl font-semibold mb-4">Hourly Forecast</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
@@ -97,7 +113,11 @@
                                 <th class="p-2">Temp (°C)</th>
                                 <th class="p-2">Humidity (%)</th>
                                 <th class="p-2">Precip. (%)</th>
+                                <th class="p-2">Precip. Type</th>
                                 <th class="p-2">Wind (m/s)</th>
+                                <th class="p-2">Wind Dir (°)</th>
+                                <th class="p-2">Cloud Cover (%)</th>
+                                <th class="p-2">Pressure (hPa)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,7 +127,11 @@
                                     <td class="p-2">{{ hour.values.temperature }}</td>
                                     <td class="p-2">{{ hour.values.humidity }}</td>
                                     <td class="p-2">{{ hour.values.precipitationProbability }}</td>
+                                    <td class="p-2">{{ hour.values.precipitationType | default('None') }}</td>
                                     <td class="p-2">{{ hour.values.windSpeed }}</td>
+                                    <td class="p-2">{{ hour.values.windDirection }}</td>
+                                    <td class="p-2">{{ hour.values.cloudCover }}</td>
+                                    <td class="p-2">{{ hour.values.pressureSurfaceLevel }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -152,7 +176,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <h3 class="text-lg font-semibold mb-2">Hourly Temperature & Humidity</h3>
-                        <canvas id="hourlyChart"></canvas>
+                        <canvas id="tempHumidityChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Hourly Precipitation & Cloud Cover</h3>
+                        <canvas id="precipCloudChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Hourly Pressure</h3>
+                        <canvas id="pressureChart"></canvas>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold mb-2">Daily Temperature Range</h3>
@@ -163,11 +195,11 @@
             <script>
                 const chartData = {{ chart_data | safe }};
 
-                // Hourly Chart
-                new Chart(document.getElementById('hourlyChart'), {
+                // Hourly Temperature & Humidity Chart
+                new Chart(document.getElementById('tempHumidityChart'), {
                     type: 'line',
                     data: {
-                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString()),
+                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
                         datasets: [
                             {
                                 label: 'Temperature (°C)',
@@ -200,7 +232,67 @@
                     }
                 });
 
-                // Daily Chart
+                // Hourly Precipitation & Cloud Cover Chart
+                new Chart(document.getElementById('precipCloudChart'), {
+                    type: 'line',
+                    data: {
+                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
+                        datasets: [
+                            {
+                                label: 'Precipitation Probability (%)',
+                                data: chartData.hourly.precipitation,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                fill: false,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Cloud Cover (%)',
+                                data: chartData.hourly.cloudCover,
+                                borderColor: 'rgba(153, 102, 255, 1)',
+                                fill: false,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Precipitation (%)' },
+                                position: 'left'
+                            },
+                            y1: {
+                                title: { display: true, text: 'Cloud Cover (%)' },
+                                position: 'right',
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+
+                // Hourly Pressure Chart
+                new Chart(document.getElementById('pressureChart'), {
+                    type: 'line',
+                    data: {
+                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' })),
+                        datasets: [
+                            {
+                                label: 'Pressure (hPa)',
+                                data: chartData.hourly.pressure,
+                                borderColor: 'rgba(255, 159, 64, 1)',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Pressure (hPa)' }
+                            }
+                        }
+                    }
+                });
+
+                // Daily Temperature Chart
                 new Chart(document.getElementById('dailyChart'), {
                     type: 'bar',
                     data: {
