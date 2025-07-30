@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="container mx-auto max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-6">Weather Dashboard</h1>
+        
+        <!-- City input form -->
+        <form method="POST" class="mb-6">
+            <div class="flex gap-2 justify-center">
+                <input 
+                    type="text" 
+                    name="city" 
+                    value="{{ city }}" 
+                    placeholder="Enter city name or lat,lon" 
+                    class="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                >
+                <button 
+                    type="submit" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                    Get Weather
+                </button>
+            </div>
+        </form>
+
+        <!-- Error message -->
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <!-- Current Weather -->
+        {% if weather_data %}
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">{{ city | capitalize }} - Current Weather</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600">Temperature</p>
+                        <p class="text-lg font-bold">{{ weather_data.temperature }}°C</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Feels Like</p>
+                        <p class="text-lg font-bold">{{ weather_data.temperatureApparent }}°C</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Humidity</p>
+                        <p class="text-lg font-bold">{{ weather_data.humidity }}%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Wind Speed</p>
+                        <p class="text-lg font-bold">{{ weather_data.windSpeed }} m/s</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Precipitation Probability</p>
+                        <p class="text-lg font-bold">{{ weather_data.precipitationProbability }}%</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Air Quality (UV Index)</p>
+                        <p class="text-lg font-bold">{{ weather_data.uvIndex }}</p>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-sm mt-4">Last updated: {{ weather_data.time }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Weather Alerts -->
+        {% if alerts %}
+            <div class="bg-yellow-100 p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Weather Alerts</h2>
+                {% for alert in alerts %}
+                    <div class="mb-2">
+                        <p class="text-lg font-bold">{{ alert.eventName }}</p>
+                        <p class="text-gray-600">{{ alert.description }}</p>
+                        <p class="text-gray-500 text-sm">Start: {{ alert.startTime }} | End: {{ alert.endTime }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Hourly Forecast -->
+        {% if hourly_forecast %}
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Hourly Forecast (Next 24 Hours)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-2">Time</th>
+                                <th class="p-2">Temp (°C)</th>
+                                <th class="p-2">Humidity (%)</th>
+                                <th class="p-2">Precip. (%)</th>
+                                <th class="p-2">Wind (m/s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hour in hourly_forecast %}
+                                <tr class="border-b">
+                                    <td class="p-2">{{ hour.time }}</td>
+                                    <td class="p-2">{{ hour.values.temperature }}</td>
+                                    <td class="p-2">{{ hour.values.humidity }}</td>
+                                    <td class="p-2">{{ hour.values.precipitationProbability }}</td>
+                                    <td class="p-2">{{ hour.values.windSpeed }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Daily Forecast -->
+        {% if daily_forecast %}
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-2xl font-semibold mb-4">Daily Forecast (Next 5 Days)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-2">Date</th>
+                                <th class="p-2">Max Temp (°C)</th>
+                                <th class="p-2">Min Temp (°C)</th>
+                                <th class="p-2">Precip. (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in daily_forecast %}
+                                <tr class="border-b">
+                                    <td class="p-2">{{ day.time }}</td>
+                                    <td class="p-2">{{ day.values.temperatureMax }}</td>
+                                    <td class="p-2">{{ day.values.temperatureMin }}</td>
+                                    <td class="p-2">{{ day.values.precipitationProbability }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Charts -->
+        {% if chart_data %}
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4">Weather Trends</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Hourly Temperature & Humidity</h3>
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Daily Temperature Range</h3>
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <script>
+                const chartData = {{ chart_data | safe }};
+
+                // Hourly Chart
+                new Chart(document.getElementById('hourlyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: chartData.hourly.labels.map(t => new Date(t).toLocaleTimeString()),
+                        datasets: [
+                            {
+                                label: 'Temperature (°C)',
+                                data: chartData.hourly.temperature,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                fill: false,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Humidity (%)',
+                                data: chartData.hourly.humidity,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                fill: false,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Temperature (°C)' },
+                                position: 'left'
+                            },
+                            y1: {
+                                title: { display: true, text: 'Humidity (%)' },
+                                position: 'right',
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+
+                // Daily Chart
+                new Chart(document.getElementById('dailyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.daily.labels.map(t => new Date(t).toLocaleDateString()),
+                        datasets: [
+                            {
+                                label: 'Max Temperature (°C)',
+                                data: chartData.daily.temperatureMax,
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                stack: 'Stack 0'
+                            },
+                            {
+                                label: 'Min Temperature (°C)',
+                                data: chartData.daily.temperatureMin,
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                stack: 'Stack 0'
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'Temperature (°C)' },
+                                stacked: true
+                            }
+                        }
+                    }
+                });
+            </script>
+        {% endif %}
+    </div>
+</body>
+</html>
