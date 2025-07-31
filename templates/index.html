@@ -4,988 +4,562 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
-        :root {
-            --liquid-glass-primary: rgba(20, 20, 20, 0.9);
-            --liquid-glass-secondary: rgba(30, 30, 30, 0.85);
-            --liquid-glass-tertiary: rgba(40, 40, 40, 0.8);
-            --liquid-border: rgba(255, 255, 255, 0.15);
-            --liquid-border-hover: rgba(255, 255, 255, 0.25);
-            --liquid-shadow: rgba(0, 0, 0, 0.6);
-            --liquid-glow: rgba(255, 255, 255, 0.1);
-            --accent-blue: #007AFF;
-            --accent-purple: #5856D6;
-            --accent-pink: #FF2D92;
-            --accent-orange: #FF9500;
-            --accent-green: #30D158;
-            --accent-cyan: #64D2FF;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
         * {
-            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
-
+        
         body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #000000;
-            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0a0a0a;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(17, 24, 39, 0.6) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(55, 65, 81, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(31, 41, 55, 0.3) 0%, transparent 50%);
             background-attachment: fixed;
-            color: #ffffff;
-            overflow-x: hidden;
-            transition: background-image 0.5s ease;
-        }
-
-        /* Liquid Glass Cards */
-        .liquid-card {
-            background: var(--liquid-glass-primary);
-            backdrop-filter: blur(40px) saturate(180%);
-            -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border: 1px solid var(--liquid-border);
-            border-radius: 24px;
-            box-shadow: 
-                0 20px 60px var(--liquid-shadow),
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
             position: relative;
-            overflow: hidden;
         }
-
-        .liquid-card::before {
+        
+        body::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.6) 20%, 
-                rgba(255, 255, 255, 0.8) 50%, 
-                rgba(255, 255, 255, 0.6) 80%, 
-                transparent 100%);
-            opacity: 0.8;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.3" fill="%23ffffff" opacity="0.05"/><circle cx="25" cy="25" r="0.2" fill="%23ffffff" opacity="0.03"/><circle cx="75" cy="75" r="0.2" fill="%23ffffff" opacity="0.04"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+            z-index: 1;
         }
-
-        .liquid-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: var(--liquid-border-hover);
-            box-shadow: 
-                0 32px 80px var(--liquid-shadow),
-                0 16px 48px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
+        
+        .main-container {
+            position: relative;
+            z-index: 10;
         }
-
-        /* Liquid Input */
-        .liquid-input {
-            background: rgba(255, 255, 255, 0.08);
+        
+        .premium-card {
+            background: rgba(17, 24, 39, 0.7);
             backdrop-filter: blur(20px);
-            border: 1.5px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            color: white;
-            padding: 16px 20px;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            border: 1px solid rgba(55, 65, 81, 0.3);
             box-shadow: 
-                inset 0 2px 8px rgba(0, 0, 0, 0.3),
-                0 1px 0 rgba(255, 255, 255, 0.1);
+                0 20px 25px -5px rgba(0, 0, 0, 0.4),
+                0 10px 10px -5px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .liquid-input:focus {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: var(--accent-blue);
+        
+        .premium-card:hover {
+            transform: translateY(-4px);
             box-shadow: 
-                0 0 0 4px rgba(0, 122, 255, 0.2),
-                inset 0 2px 8px rgba(0, 0, 0, 0.2),
-                0 8px 32px rgba(0, 122, 255, 0.15);
-            outline: none;
-            transform: scale(1.02);
+                0 32px 64px -12px rgba(0, 0, 0, 0.5),
+                0 16px 24px -8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border-color: rgba(75, 85, 99, 0.4);
         }
-
-        .liquid-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 400;
+        
+        .floating-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
         }
-
-        /* Liquid Buttons */
-        .liquid-btn {
-            background: linear-gradient(135deg, var(--accent-blue) 0%, #0056CC 100%);
-            border: none;
-            border-radius: 20px;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-            padding: 16px 24px;
-            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(156, 163, 175, 0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+            filter: blur(1px);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.3; }
+            25% { transform: translateY(-30px) translateX(20px) scale(1.1); opacity: 0.5; }
+            50% { transform: translateY(-60px) translateX(-10px) scale(0.9); opacity: 0.7; }
+            75% { transform: translateY(-20px) translateX(-30px) scale(1.05); opacity: 0.4; }
+        }
+        
+        .weather-icon {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3));
+        }
+        
+        .weather-icon:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.4));
+        }
+        
+        .temp-display {
+            background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 50%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-input {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(55, 65, 81, 0.4);
+            color: #f9fafb;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .search-input:focus {
+            background: rgba(31, 41, 55, 0.9);
+            border-color: rgba(107, 114, 128, 0.6);
+            box-shadow: 
+                0 0 0 3px rgba(107, 114, 128, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .search-input::placeholder {
+            color: rgba(156, 163, 175, 0.7);
+        }
+        
+        .search-button {
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: 
-                0 8px 24px rgba(0, 122, 255, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
-
-        .liquid-btn::before {
+        
+        .search-button:before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
         }
-
-        .liquid-btn:hover::before {
+        
+        .search-button:hover:before {
             left: 100%;
         }
-
-        .liquid-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 
-                0 16px 40px rgba(0, 122, 255, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-
-        .liquid-btn:active {
-            transform: translateY(-1px) scale(1.02);
-        }
-
-        .liquid-btn-secondary {
-            background: linear-gradient(135deg, var(--accent-green) 0%, #28A745 100%);
-            box-shadow: 
-                0 8px 24px rgba(48, 209, 88, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-
-        .liquid-btn-secondary:hover {
-            box-shadow: 
-                0 16px 40px rgba(48, 209, 88, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-
-        /* Weather Icons */
-        .weather-icon-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .weather-icon {
-            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
-            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-            position: relative;
-            z-index: 2;
-        }
-
-        .weather-icon:hover {
-            transform: scale(1.15) rotate(5deg);
-            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.5));
-        }
-
-        .weather-icon-container::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 120%;
-            height: 120%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .weather-icon-container:hover::before {
-            opacity: 1;
-        }
-
-        /* Forecast Cards */
-        .forecast-card {
-            background: var(--liquid-glass-secondary);
-            backdrop-filter: blur(30px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 
-                0 12px 40px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        }
-
-        .forecast-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                var(--accent-blue) 25%, 
-                var(--accent-purple) 50%, 
-                var(--accent-pink) 75%, 
-                transparent 100%);
-            opacity: 0.6;
-        }
-
-        .forecast-card:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 
-                0 20px 60px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Chart Containers */
-        .chart-container {
-            background: var(--liquid-glass-tertiary);
-            backdrop-filter: blur(25px) saturate(140%);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 24px;
-            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            box-shadow: 
-                0 16px 48px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .chart-container:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 
-                0 24px 64px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        
+        .search-button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
         }
-
-        /* Metric Cards */
-        .metric-card {
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.12) 0%, 
-                rgba(255, 255, 255, 0.06) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        
+        .hourly-card {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(55, 65, 81, 0.25);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hourly-card:hover {
+            background: rgba(55, 65, 81, 0.7);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .forecast-row {
+            background: rgba(31, 41, 55, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(55, 65, 81, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .forecast-row:hover {
+            background: rgba(55, 65, 81, 0.5);
+            transform: translateX(8px);
+            border-color: rgba(75, 85, 99, 0.3);
+        }
+        
+        .title-glow {
+            color: #f9fafb;
+            text-shadow: 0 0 20px rgba(156, 163, 175, 0.3);
+            animation: titlePulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes titlePulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(156, 163, 175, 0.3); }
+            50% { text-shadow: 0 0 30px rgba(156, 163, 175, 0.5); }
+        }
+        
+        .error-alert {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            animation: errorSlide 0.5s ease-out;
+            box-shadow: 0 8px 25px -5px rgba(220, 38, 38, 0.2);
+        }
+        
+        @keyframes errorSlide {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .stat-item {
+            background: rgba(31, 41, 55, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(55, 65, 81, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .stat-item:hover {
+            background: rgba(55, 65, 81, 0.4);
+            transform: translateY(-2px);
+            border-color: rgba(75, 85, 99, 0.3);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chart-container {
             position: relative;
-            overflow: hidden;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            background: rgba(17, 24, 39, 0.5);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(55, 65, 81, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+        
+        .accent-blue { color: #60a5fa; }
+        .accent-cyan { color: #22d3ee; }
+        .accent-emerald { color: #10b981; }
+        .accent-amber { color: #f59e0b; }
+        
+        .premium-icon {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+        
+        .glass-text {
+            color: rgba(249, 250, 251, 0.9);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            background: linear-gradient(90deg, transparent, rgba(75, 85, 99, 0.3), transparent);
+            margin: 2rem 0;
         }
-
-        .metric-card:hover {
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.18) 0%, 
-                rgba(255, 255, 255, 0.08) 100%);
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 
-                0 12px 40px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Typography */
-        .text-glow {
-            text-shadow: 
-                0 0 20px rgba(255, 255, 255, 0.3),
-                0 0 40px rgba(255, 255, 255, 0.1);
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, 
-                var(--accent-blue) 0%, 
-                var(--accent-purple) 35%, 
-                var(--accent-pink) 70%, 
-                var(--accent-orange) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-        }
-
-        /* Animations */
-        @keyframes liquidFlow {
-            0%, 100% { 
-                transform: translateX(0) scale(1); 
-                opacity: 0.6;
-            }
-            50% { 
-                transform: translateX(10px) scale(1.1); 
-                opacity: 0.8;
-            }
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { 
-                box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
-            }
-            50% { 
-                box-shadow: 0 0 40px rgba(0, 122, 255, 0.6);
-            }
-        }
-
-        .pulse-glow {
-            animation: pulseGlow 3s ease-in-out infinite;
-        }
-
+        
         .loading-shimmer {
-            background: linear-gradient(90deg, 
-                rgba(255, 255, 255, 0.1) 0%, 
-                rgba(255, 255, 255, 0.3) 50%, 
-                rgba(255, 255, 255, 0.1) 100%);
+            background: linear-gradient(90deg, rgba(55, 65, 81, 0.3) 25%, rgba(75, 85, 99, 0.4) 50%, rgba(55, 65, 81, 0.3) 75%);
             background-size: 200% 100%;
             animation: shimmer 2s infinite;
         }
-
+        
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
         }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
-            border-radius: 4px;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(45deg, #0056CC, #4A44B8);
-        }
-
-        /* Responsive Enhancements */
-        @media (max-width: 768px) {
-            .liquid-card {
-                border-radius: 20px;
-                margin: 0 4px;
-            }
-            
-            .forecast-card {
-                border-radius: 16px;
-            }
-        }
-
-        .dark-mode-text { color: rgba(255, 255, 255, 0.9); }
-        .dark-mode-subtext { color: rgba(255, 255, 255, 0.6); }
-        .dark-mode-accent { color: rgba(255, 255, 255, 0.4); }
-
-        .hidden { display: none; }
-        .error-message {
-            background: rgba(255, 45, 85, 0.1);
-            border: 1px solid rgba(255, 45, 85, 0.3);
-            color: #ff2d55;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
-<body>
-    <div class="container mx-auto p-4 max-w-7xl">
-        <!-- Header -->
+<body class="min-h-screen font-sans text-gray-100">
+    <!-- Floating Orbs Background -->
+    <div class="floating-orbs">
+        <div class="orb" style="left: 15%; top: 20%; width: 200px; height: 200px; animation-delay: 0s;"></div>
+        <div class="orb" style="left: 70%; top: 10%; width: 150px; height: 150px; animation-delay: 5s;"></div>
+        <div class="orb" style="left: 60%; top: 70%; width: 180px; height: 180px; animation-delay: 10s;"></div>
+        <div class="orb" style="left: 20%; top: 60%; width: 120px; height: 120px; animation-delay: 15s;"></div>
+    </div>
+    
+    <div class="main-container container mx-auto p-6 max-w-6xl">
         <div class="text-center mb-12">
-            <h1 class="text-6xl font-bold text-glow mb-4 gradient-text">Weather Dashboard</h1>
-            <p class="dark-mode-subtext text-xl font-medium">Beautiful weather insights with liquid glass design</p>
+            <h1 class="text-6xl font-bold mb-4 title-glow tracking-tight">
+                Weather Dashboard
+            </h1>
+            <p class="text-xl text-gray-400 font-light">Professional weather insights at your fingertips</p>
         </div>
         
-        <!-- Search Form -->
-        <div class="liquid-card p-8 mb-12">
-            <form id="weatherForm">
-                <div class="flex flex-col lg:flex-row justify-center items-center gap-6">
-                    <input type="text" name="location" id="locationInput" value="London" 
-                           placeholder="Enter city or coordinates" 
-                           class="liquid-input w-full lg:w-96 text-white">
-                    <select name="forecast_days" id="forecastDays" class="liquid-input w-full lg:w-48">
-                        <option value="5">5 Days</option>
-                        <option value="10">10 Days</option>
-                        <option value="30">1 Month</option>
-                    </select>
-                    <select name="unit" id="unitSelect" class="liquid-input w-full lg:w-32">
-                        <option value="C">°C</option>
-                        <option value="F">°F</option>
-                    </select>
-                    <button type="submit" class="liquid-btn w-full lg:w-auto">🔍 Search Weather</button>
-                    <button type="button" id="geolocationBtn" class="liquid-btn liquid-btn-secondary w-full lg:w-auto">📍 My Location</button>
-                </div>
-            </form>
-        </div>
+        <!-- City Search Form -->
+        <form method="POST" action="/" class="mb-10 flex justify-center search-container">
+            <div class="flex w-full max-w-lg">
+                <input type="text" name="city" value="{{ city }}" placeholder="Enter city name..." 
+                       class="search-input rounded-l-xl shadow-lg focus:ring-2 focus:ring-gray-500 focus:ring-opacity-30 text-lg p-4 flex-1 outline-none">
+                <button type="submit" class="search-button text-white py-4 px-8 rounded-r-xl font-semibold text-lg">
+                    Search
+                </button>
+            </div>
+        </form>
 
         <!-- Error Message -->
-        <div id="errorMessage" class="error-message hidden text-center"></div>
-
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden text-center mb-8">
-            <div class="liquid-card p-8">
-                <div class="loading-shimmer h-8 w-64 mx-auto rounded mb-4"></div>
-                <p class="dark-mode-subtext">Loading weather data...</p>
+        {% if error %}
+            <div class="error-alert text-white p-6 rounded-xl mb-8 text-center font-medium text-lg">
+                {{ error }}
             </div>
-        </div>
+        {% endif %}
 
-        <!-- Weather Data Container -->
-        <div id="weatherContainer" class="hidden">
-            <!-- Current Weather -->
-            <div class="liquid-card p-10 mb-12">
-                <h2 class="text-4xl font-bold mb-8 text-center gradient-text" id="locationTitle">
-                    Current Weather
-                </h2>
-                <div class="flex flex-col xl:flex-row items-center justify-between gap-8">
-                    <!-- Main Weather Info -->
-                    <div class="flex items-center">
-                        <div class="weather-icon-container mr-8">
-                            <div id="weatherIcon" class="weather-icon w-32 h-32 bg-blue-500 rounded-full flex items-center justify-center text-6xl">
-                                ☀️
+        <!-- Current Weather -->
+        {% if current_weather %}
+            <div class="premium-card p-10 rounded-2xl mb-10">
+                <div class="text-center mb-8">
+                    <h2 class="text-4xl font-bold glass-text mb-2">
+                        {{ current_weather.location.name }}, {{ current_weather.location.country }}
+                    </h2>
+                    <p class="text-lg text-gray-400">{{ current_weather.current.last_updated }}</p>
+                </div>
+                
+                <div class="flex flex-col lg:flex-row items-center justify-center mb-10">
+                    <div class="flex items-center mb-8 lg:mb-0">
+                        <img src="https:{{ current_weather.current.condition.icon }}" 
+                             alt="Weather icon" class="weather-icon w-40 h-40 mr-8">
+                        <div class="text-center lg:text-left">
+                            <div class="temp-display text-8xl font-bold mb-3">{{ current_weather.current.temp_c }}°</div>
+                            <p class="text-2xl glass-text mb-2">{{ current_weather.current.condition.text }}</p>
+                            <p class="text-xl text-gray-400">Feels like {{ current_weather.current.feelslike_c }}°C</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3 accent-blue">💧</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">Humidity</div>
+                        <div class="text-2xl font-bold">{{ current_weather.current.humidity }}%</div>
+                    </div>
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3 accent-cyan">💨</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">Wind</div>
+                        <div class="text-2xl font-bold">{{ current_weather.current.wind_kph }}</div>
+                        <div class="text-xs text-gray-500">{{ current_weather.current.wind_dir }}</div>
+                    </div>
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3 accent-amber">☀️</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">UV Index</div>
+                        <div class="text-2xl font-bold">{{ current_weather.current.uv }}</div>
+                    </div>
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3">🌡️</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">Pressure</div>
+                        <div class="text-2xl font-bold">{{ current_weather.current.pressure_mb }}</div>
+                        <div class="text-xs text-gray-500">mb</div>
+                    </div>
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3 accent-emerald">👁️</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">Visibility</div>
+                        <div class="text-2xl font-bold">{{ current_weather.current.vis_km }}</div>
+                        <div class="text-xs text-gray-500">km</div>
+                    </div>
+                    <div class="stat-item p-6 rounded-xl text-center">
+                        <div class="text-3xl premium-icon mb-3">🕐</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wide mb-1">Updated</div>
+                        <div class="text-lg font-bold">{{ current_weather.current.last_updated.split(' ')[1] }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Hourly Forecast -->
+        {% if forecast_data %}
+            <div class="premium-card p-8 rounded-2xl mb-10">
+                <h2 class="text-3xl font-bold glass-text mb-8 text-center">24-Hour Forecast</h2>
+                <div class="flex overflow-x-auto space-x-6 pb-4">
+                    {% for hour in forecast_data.forecast.forecastday[0].hour[::2] %}
+                        <div class="hourly-card flex-shrink-0 w-32 p-6 rounded-xl text-center">
+                            <p class="text-sm font-semibold mb-3 text-gray-300">{{ hour.time.split(' ')[1] }}</p>
+                            <img src="https:{{ hour.condition.icon }}" 
+                                 alt="Weather icon" class="weather-icon w-14 h-14 mx-auto mb-3">
+                            <p class="text-xl font-bold mb-2">{{ hour.temp_c }}°</p>
+                            <p class="text-sm accent-blue font-medium">{{ hour.chance_of_rain }}%</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 7-Day Forecast -->
+            <div class="premium-card p-8 rounded-2xl mb-10">
+                <h2 class="text-3xl font-bold glass-text mb-8 text-center">7-Day Forecast</h2>
+                <div class="space-y-4">
+                    {% for day in forecast_data.forecast.forecastday %}
+                        <div class="forecast-row flex items-center justify-between p-6 rounded-xl">
+                            <div class="flex items-center flex-1">
+                                <p class="w-32 font-bold text-lg">{{ day.date }}</p>
+                                <img src="https:{{ day.day.condition.icon }}" 
+                                     alt="Weather icon" class="weather-icon w-12 h-12 mx-6">
+                                <p class="flex-1 text-gray-300">{{ day.day.condition.text }}</p>
+                            </div>
+                            <div class="flex items-center space-x-8">
+                                <div class="text-right">
+                                    <div class="text-xl font-bold">{{ day.day.maxtemp_c }}° / {{ day.day.mintemp_c }}°</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="accent-blue font-medium">{{ day.day.daily_chance_of_rain }}%</div>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <p class="text-6xl font-bold mb-3 text-glow" id="currentTemp">
-                                22°C
-                            </p>
-                            <p class="text-2xl dark-mode-text mb-2" id="currentCondition">Sunny</p>
-                            <p class="text-xl dark-mode-subtext" id="feelsLike">
-                                Feels like 25°C
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Weather Metrics Grid -->
-                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">💧</div>
-                            <div class="text-sm dark-mode-accent mb-1">Humidity</div>
-                            <div class="text-xl font-bold dark-mode-text" id="humidity">65%</div>
-                        </div>
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">💨</div>
-                            <div class="text-sm dark-mode-accent mb-1">Wind</div>
-                            <div class="text-xl font-bold dark-mode-text" id="wind">12 kph NE</div>
-                        </div>
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">🌡️</div>
-                            <div class="text-sm dark-mode-accent mb-1">Pressure</div>
-                            <div class="text-xl font-bold dark-mode-text" id="pressure">1013 mb</div>
-                        </div>
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">👁️</div>
-                            <div class="text-sm dark-mode-accent mb-1">Visibility</div>
-                            <div class="text-xl font-bold dark-mode-text" id="visibility">10 km</div>
-                        </div>
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">☀️</div>
-                            <div class="text-sm dark-mode-accent mb-1">UV Index</div>
-                            <div class="text-xl font-bold dark-mode-text" id="uvIndex">5</div>
-                        </div>
-                        <div class="metric-card p-6 text-center">
-                            <div class="text-3xl mb-2">🌅</div>
-                            <div class="text-sm dark-mode-accent mb-1">Sunrise</div>
-                            <div class="text-xl font-bold dark-mode-text" id="sunrise">06:30</div>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Forecast -->
-            <div class="liquid-card p-10 mb-12">
-                <h2 class="text-4xl font-bold mb-8 text-center gradient-text">5-Day Forecast</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6" id="forecastContainer">
-                    <!-- Forecast cards will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="liquid-card p-10">
-                <h2 class="text-4xl font-bold mb-10 text-center gradient-text">Weather Analytics</h2>
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <!-- Enhanced Visualizations -->
+            <div class="premium-card p-8 rounded-2xl">
+                <h2 class="text-3xl font-bold glass-text mb-8 text-center">Weather Analytics</h2>
+                <div class="grid lg:grid-cols-2 gap-8">
                     <!-- Temperature Chart -->
                     <div class="chart-container">
-                        <h3 class="text-2xl font-bold mb-6 text-orange-400 flex items-center">
-                            <span class="text-3xl mr-3">🌡️</span> Temperature Trends
-                        </h3>
-                        <div class="relative" style="height: 350px;">
-                            <canvas id="tempChart"></canvas>
-                        </div>
+                        <h3 class="text-xl font-semibold mb-6 text-center glass-text">Temperature Trend</h3>
+                        <canvas id="tempChart" width="400" height="300"></canvas>
+                        <script>
+                            const tempCtx = document.getElementById('tempChart').getContext('2d');
+                            new Chart(tempCtx, {
+                                type: 'line',
+                                data: {
+                                    labels: [
+                                        {% for day in forecast_data.forecast.forecastday %}
+                                            '{{ day.date }}'{% if not loop.last %},{% endif %}
+                                        {% endfor %}
+                                    ],
+                                    datasets: [{
+                                        label: 'Max Temperature',
+                                        data: [
+                                            {% for day in forecast_data.forecast.forecastday %}
+                                                {{ day.day.maxtemp_c }}{% if not loop.last %},{% endif %}
+                                            {% endfor %}
+                                        ],
+                                        borderColor: '#f59e0b',
+                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                        fill: true,
+                                        tension: 0.4,
+                                        borderWidth: 3,
+                                        pointBackgroundColor: '#f59e0b',
+                                        pointBorderColor: '#1f2937',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 6,
+                                        pointHoverRadius: 8
+                                    }, {
+                                        label: 'Min Temperature',
+                                        data: [
+                                            {% for day in forecast_data.forecast.forecastday %}
+                                                {{ day.day.mintemp_c }}{% if not loop.last %},{% endif %}
+                                            {% endfor %}
+                                        ],
+                                        borderColor: '#60a5fa',
+                                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                                        fill: true,
+                                        tension: 0.4,
+                                        borderWidth: 3,
+                                        pointBackgroundColor: '#60a5fa',
+                                        pointBorderColor: '#1f2937',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 6,
+                                        pointHoverRadius: 8
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            labels: { 
+                                                color: '#d1d5db', 
+                                                font: { size: 14, weight: '500' },
+                                                padding: 20
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: { 
+                                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                                            grid: { color: 'rgba(75, 85, 99, 0.2)' }
+                                        },
+                                        y: { 
+                                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                                            grid: { color: 'rgba(75, 85, 99, 0.2)' },
+                                            title: { 
+                                                display: true, 
+                                                text: 'Temperature (°C)', 
+                                                color: '#d1d5db',
+                                                font: { size: 14, weight: '500' }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        </script>
                     </div>
+
                     <!-- Precipitation Chart -->
                     <div class="chart-container">
-                        <h3 class="text-2xl font-bold mb-6 text-blue-400 flex items-center">
-                            <span class="text-3xl mr-3">🌧️</span> Precipitation
-                        </h3>
-                        <div class="relative" style="height: 350px;">
-                            <canvas id="precipChart"></canvas>
-                        </div>
-                    </div>
-                    <!-- Humidity Chart -->
-                    <div class="chart-container">
-                        <h3 class="text-2xl font-bold mb-6 text-purple-400 flex items-center">
-                            <span class="text-3xl mr-3">💧</span> Humidity Levels
-                        </h3>
-                        <div class="relative" style="height: 350px;">
-                            <canvas id="humidityChart"></canvas>
-                        </div>
-                    </div>
-                    <!-- Wind Speed Chart -->
-                    <div class="chart-container">
-                        <h3 class="text-2xl font-bold mb-6 text-green-400 flex items-center">
-                            <span class="text-3xl mr-3">💨</span> Wind Speed
-                        </h3>
-                        <div class="relative" style="height: 350px;">
-                            <canvas id="windChart"></canvas>
-                        </div>
+                        <h3 class="text-xl font-semibold mb-6 text-center glass-text">Precipitation Forecast</h3>
+                        <canvas id="precipChart" width="400" height="300"></canvas>
+                        <script>
+                            const precipCtx = document.getElementById('precipChart').getContext('2d');
+                            new Chart(precipCtx, {
+                                type: 'bar',
+                                data: {
+                                    labels: [
+                                        {% for day in forecast_data.forecast.forecastday %}
+                                            '{{ day.date }}'{% if not loop.last %},{% endif %}
+                                        {% endfor %}
+                                    ],
+                                    datasets: [{
+                                        label: 'Chance of Rain (%)',
+                                        data: [
+                                            {% for day in forecast_data.forecast.forecastday %}
+                                                {{ day.day.daily_chance_of_rain }}{% if not loop.last %},{% endif %}
+                                            {% endfor %}
+                                        ],
+                                        backgroundColor: function(context) {
+                                            const canvas = context.chart.ctx;
+                                            const gradient = canvas.createLinearGradient(0, 0, 0, 400);
+                                            gradient.addColorStop(0, 'rgba(34, 211, 238, 0.8)');
+                                            gradient.addColorStop(1, 'rgba(34, 211, 238, 0.2)');
+                                            return gradient;
+                                        },
+                                        borderColor: '#22d3ee',
+                                        borderWidth: 2,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            labels: { 
+                                                color: '#d1d5db', 
+                                                font: { size: 14, weight: '500' },
+                                                padding: 20
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: { 
+                                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                                            grid: { color: 'rgba(75, 85, 99, 0.2)' }
+                                        },
+                                        y: { 
+                                            beginAtZero: true,
+                                            max: 100,
+                                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                                            grid: { color: 'rgba(75, 85, 99, 0.2)' },
+                                            title: { 
+                                                display: true, 
+                                                text: 'Chance of Rain (%)', 
+                                                color: '#d1d5db',
+                                                font: { size: 14, weight: '500' }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        </script>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="text-center mt-12 mb-8">
-            <p class="dark-mode-accent text-sm">Powered by WeatherAPI • Designed with Apple's Liquid Glass UI</p>
-        </div>
+        {% endif %}
     </div>
-
-    <script>
-        // Sample weather data for demonstration
-        const sampleWeatherData = {
-            location: { name: "London" },
-            current: {
-                temp_c: 22, temp_f: 72,
-                condition: { text: "Partly Cloudy" },
-                feelslike_c: 25, feelslike_f: 77,
-                humidity: 65,
-                wind_kph: 12, wind_dir: "NE",
-                pressure_mb: 1013,
-                vis_km: 10,
-                uv: 5
-            },
-            forecast: [
-                { day: "Today", temp_max: 25, temp_min: 18, condition: "Sunny", rain: 0, wind: 12, icon: "☀️" },
-                { day: "Tomorrow", temp_max: 23, temp_min: 16, condition: "Cloudy", rain: 2, wind: 15, icon: "☁️" },
-                { day: "Day 3", temp_max: 20, temp_min: 14, condition: "Rainy", rain: 8, wind: 18, icon: "🌧️" },
-                { day: "Day 4", temp_max: 24, temp_min: 17, condition: "Partly Cloudy", rain: 1, wind: 10, icon: "⛅" },
-                { day: "Day 5", temp_max: 26, temp_min: 19, condition: "Sunny", rain: 0, wind: 8, icon: "☀️" }
-            ]
-        };
-
-        let currentUnit = 'C';
-        let weatherCharts = {};
-
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSampleData();
-            initializeEventListeners();
-        });
-
-        function initializeEventListeners() {
-            // Form submission
-            document.getElementById('weatherForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                searchWeather();
-            });
-
-            // Geolocation button
-            document.getElementById('geolocationBtn').addEventListener('click', function() {
-                getLocation();
-            });
-
-            // Unit change
-            document.getElementById('unitSelect').addEventListener('change', function() {
-                currentUnit = this.value;
-                updateTemperatureDisplay();
-            });
-        }
-
-        function loadSampleData() {
-            showWeatherData(sampleWeatherData);
-        }
-
-        function searchWeather() {
-            const location = document.getElementById('locationInput').value;
-            const forecastDays = document.getElementById('forecastDays').value;
-            
-            showLoading();
-            
-            // Simulate API call
-            setTimeout(() => {
-                hideLoading();
-                showWeatherData(sampleWeatherData);
-            }, 1000);
-        }
-
-        function getLocation() {
-            const btn = document.getElementById('geolocationBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '📍 Getting Location...';
-            btn.disabled = true;
-            btn.classList.add('pulse-glow');
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude.toFixed(4);
-                        const lon = position.coords.longitude.toFixed(4);
-                        document.getElementById('locationInput').value = `${lat},${lon}`;
-                        btn.innerHTML = '✅ Location Found!';
-                        btn.classList.remove('pulse-glow');
-                        btn.style.boxShadow = '0 0 30px rgba(48, 209, 88, 0.6)';
-                        setTimeout(() => {
-                            searchWeather();
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                            btn.style.boxShadow = '';
-                        }, 1000);
-                    },
-                    (error) => {
-                        btn.innerHTML = '❌ Location Error';
-                        btn.classList.remove('pulse-glow');
-                        btn.style.boxShadow = '0 0 30px rgba(255, 45, 146, 0.6)';
-                        setTimeout(() => {
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                            btn.style.boxShadow = '';
-                        }, 2000);
-                    }
-                );
-            } else {
-                btn.innerHTML = '❌ Not Supported';
-                btn.classList.remove('pulse-glow');
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }, 2000);
-            }
-        }
-
-        function showLoading() {
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('weatherContainer').classList.add('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingState').classList.add('hidden');
-        }
-
-        function showError(message) {
-            document.getElementById('errorMessage').textContent = message;
-            document.getElementById('errorMessage').classList.remove('hidden');
-            document.getElementById('weatherContainer').classList.add('hidden');
-            hideLoading();
-        }
-
-        function showWeatherData(data) {
-            hideLoading();
-            document.getElementById('weatherContainer').classList.remove('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
-
-            // Update current weather
-            updateCurrentWeather(data);
-            updateForecast(data.forecast);
-            createCharts(data.forecast);
-        }
-
-        function updateCurrentWeather(data) {
-            const temp = currentUnit === 'C' ? data.current.temp_c : data.current.temp_f;
-            const feelsLike = currentUnit === 'C' ? data.current.feelslike_c : data.current.feelslike_f;
-            const unit = currentUnit === 'C' ? '°C' : '°F';
-
-            document.getElementById('locationTitle').textContent = `Current Weather in ${data.location.name}`;
-            document.getElementById('currentTemp').textContent = `${temp}${unit}`;
-            document.getElementById('currentCondition').textContent = data.current.condition.text;
-            document.getElementById('feelsLike').textContent = `Feels like ${feelsLike}${unit}`;
-            document.getElementById('humidity').textContent = `${data.current.humidity}%`;
-            document.getElementById('wind').textContent = `${data.current.wind_kph} kph ${data.current.wind_dir}`;
-            document.getElementById('pressure').textContent = `${data.current.pressure_mb} mb`;
-            document.getElementById('visibility').textContent = `${data.current.vis_km} km`;
-            document.getElementById('uvIndex').textContent = data.current.uv;
-            document.getElementById('sunrise').textContent = '06:30';
-        }
-
-        function updateForecast(forecastData) {
-            const container = document.getElementById('forecastContainer');
-            container.innerHTML = '';
-
-            forecastData.forEach((day, index) => {
-                const maxTemp = currentUnit === 'C' ? day.temp_max : Math.round(day.temp_max * 9/5 + 32);
-                const minTemp = currentUnit === 'C' ? day.temp_min : Math.round(day.temp_min * 9/5 + 32);
-                const unit = currentUnit === 'C' ? '°C' : '°F';
-
-                const card = document.createElement('div');
-                card.className = 'forecast-card p-6 text-center';
-                card.innerHTML = `
-                    <h3 class="font-bold text-lg mb-4 text-blue-400">${day.day}</h3>
-                    <div class="weather-icon-container mb-4">
-                        <div class="weather-icon w-20 h-20 mx-auto text-5xl flex items-center justify-center">
-                            ${day.icon}
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="dark-mode-accent">Max:</span>
-                            <span class="font-bold text-orange-400">${maxTemp}${unit}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="dark-mode-accent">Min:</span>
-                            <span class="font-bold text-blue-400">${minTemp}${unit}</span>
-                        </div>
-                        <div class="text-sm dark-mode-text mt-4">${day.condition}</div>
-                        <div class="grid grid-cols-2 gap-3 mt-5 text-xs">
-                            <div>
-                                <div class="dark-mode-accent">Rain</div>
-                                <div class="text-blue-400 font-semibold">${day.rain} mm</div>
-                            </div>
-                            <div>
-                                <div class="dark-mode-accent">Wind</div>
-                                <div class="text-green-400 font-semibold">${day.wind} kph</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function updateTemperatureDisplay() {
-            // Update all temperature displays when unit changes
-            if (document.getElementById('weatherContainer').classList.contains('hidden')) return;
-            
-            // This would update the display with the current data
-            loadSampleData();
-        }
-
-        function createCharts(forecastData) {
-            // Chart.js Configuration
-            Chart.defaults.color = '#ffffff';
-            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-            
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff',
-                            font: { size: 14, weight: '600' },
-                            padding: 20,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        borderWidth: 1,
-                        cornerRadius: 12,
-                        displayColors: true,
-                        titleFont: { size: 14, weight: '600' },
-                        bodyFont: { size: 13 }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: 'rgba(255, 255, 255, 0.8)', font: { size: 12, weight: '500' } },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false }
-                    },
-                    y: {
-                        ticks: { color: 'rgba(255, 255, 255, 0.8)', font: { size: 12, weight: '500' } },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false }
-                    }
-                },
-                elements: {
-                    point: { radius: 6, hoverRadius: 8, borderWidth: 3 },
-                    line: { borderWidth: 3, tension: 0.4 }
-                }
-            };
-
-            const labels = forecastData.map(day => day.day);
-
-            // Destroy existing charts
-            Object.values(weatherCharts).forEach(chart => {
-                if (chart) chart.destroy();
-            });
-
-            // Temperature Chart
-            const tempCtx = document.getElementById('tempChart').getContext('2d');
-            const tempGradient = tempCtx.createLinearGradient(0, 0, 0, 350);
-            tempGradient.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
-            tempGradient.addColorStop(1, 'rgba(255, 107, 107, 0.05)');
-            const tempGradientMin = tempCtx.createLinearGradient(0, 0, 0, 350);
-            tempGradientMin.addColorStop(0, 'rgba(78, 205, 196, 0.3)');
-            tempGradientMin.addColorStop(1, 'rgba(78, 205, 196, 0.05)');
-
-            weatherCharts.temp = new Chart(tempCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `Max Temperature (${currentUnit === 'C' ? '°C' : '°F'})`,
-                        data: forecastData.map(day => currentUnit === 'C' ? day.temp_max : Math.round(day.temp_max * 9/5 + 32)),
-                        borderColor: '#ff6b6b',
-                        backgroundColor: tempGradient,
-                        fill: true,
-                        pointBackgroundColor: '#ff6b6b',
-                        pointBorderColor: '#ffffff'
-                    }, {
-                        label: `Min Temperature (${currentUnit === 'C' ? '°C' : '°F'})`,
-                        data: forecastData.map(day => currentUnit === 'C' ? day.temp_min : Math.round(day.temp_min * 9/5 + 32)),
-                        borderColor: '#4ecdc4',
-                        backgroundColor: tempGradientMin,
-                        fill: true,
-                        pointBackgroundColor: '#4ecdc4',
-                        pointBorderColor: '#ffffff'
-                    }]
-                },
-                options: chartOptions
-            });
-
-            // Precipitation Chart
-            const precipCtx = document.getElementById('precipChart').getContext('2d');
-            const precipGradient = precipCtx.createLinearGradient(0, 0, 0, 350);
-            precipGradient.addColorStop(0, 'rgba(74, 144, 226, 0.8)');
-            precipGradient.addColorStop(1, 'rgba(74, 144, 226, 0.2)');
-
-            weatherCharts.precip = new Chart(precipCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Precipitation (mm)',
-                        data: forecastData.map(day => day.rain),
-                        backgroundColor: precipGradient,
-                        borderColor: '#4a90e2',
-                        borderWidth: 2,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    elements: { bar: { borderRadius: 8 } }
-                }
-            });
-
-            // Humidity Chart
-            const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-            const humidityGradient = humidityCtx.createLinearGradient(0, 0, 0, 350);
-            humidityGradient.addColorStop(0, 'rgba(155, 89, 182, 0.3)');
-            humidityGradient.addColorStop(1, 'rgba(155, 89, 182, 0.05)');
-
-            weatherCharts.humidity = new Chart(humidityCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Humidity (%)',
-                        data: [65, 70, 80, 60, 55], // Sample data
-                        borderColor: '#9b59b6',
-                        backgroundColor: humidityGradient,
-                        fill: true,
-                        pointBackgroundColor: '#9b59b6',
-                        pointBorderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    ...chartOptions,
-                    scales: {
-                        ...chartOptions.scales,
-                        y: { ...chartOptions.scales.y, beginAtZero: true, max: 100 }
-                    }
-                }
-            });
-
-            // Wind Speed Chart
-            const windCtx = document.getElementById('windChart').getContext('2d');
-            const windGradient = windCtx.createLinearGradient(0, 0, 0, 350);
-            windGradient.addColorStop(0, 'rgba(46, 204, 113, 0.3)');
-            windGradient.addColorStop(1, 'rgba(46, 204, 113, 0.05)');
-
-            weatherCharts.wind = new Chart(windCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Wind Speed (kph)',
-                        data: forecastData.map(day => day.wind),
-                        borderColor: '#2ecc71',
-                        backgroundColor: windGradient,
-                        fill: true,
-                        pointBackgroundColor: '#2ecc71',
-                        pointBorderColor: '#ffffff'
-                    }]
-                },
-                options: chartOptions
-            });
-        }
-
-        // Interactive Effects
-        document.querySelectorAll('.liquid-card, .forecast-card, .metric-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transition = 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-            });
-        });
-
-        document.querySelectorAll('.liquid-input').forEach(input => {
-            input.addEventListener('focus', function() {
-                if (this.parentElement) {
-                    this.parentElement.style.transform = 'scale(1.02)';
-                }
-            });
-            input.addEventListener('blur', function() {
-                if (this.parentElement) {
-                    this.parentElement.style.transform = 'scale(1)';
-                }
-            });
-        });
-
-        // Smooth scroll
-        document.documentElement.style.scrollBehavior = 'smooth';
-
-        // Initialize page
-        window.addEventListener('load', () => {
-            document.body.classList.add('loaded');
-        });
-    </script>
 </body>
 </html>
